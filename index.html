@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>LEVEL UP XMAS FINAL - Reservation</title>
+<style>
+*{box-sizing:border-box}body{background:#0a0f1e;color:#fff;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh;margin:0;padding:20px;padding-top:calc(20px + env(safe-area-inset-top,0px));padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+.logo{font-size:10px;letter-spacing:2px;color:#ffd700;margin:16px 0 8px;opacity:.6}h1{color:#ffd700;font-size:26px;margin:0;text-align:center}
+.sub{color:#9ca3af;margin:4px 0 18px;font-size:12px}.card{background:#111827;border:1px solid #1f2937;border-radius:18px;padding:18px;width:100%;max-width:390px;margin-bottom:14px}
+.card h3{margin:0 0 10px;font-size:12px;color:#ffd700}.ticket{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px;margin:8px 0;border:1.5px solid #2a3441;border-radius:12px;cursor:pointer}
+.ticket.selected{border-color:#ffd700;background:#1e2436}.ticket.full{opacity:.45;cursor:not-allowed}
+.early{margin-top:14px;padding:12px;border-radius:12px;display:flex;gap:10px}.early.active{border:1px dashed #ffd700;background:#1a1a0a}.early.sold{border:1px solid #ff3b3b;background:#1f0f0f}.early.off{border:1px solid #2a3441;background:#0f1522;color:#9ca3af}
+.qty{display:flex;justify-content:space-between;margin-top:14px}.qty button{width:36px;height:36px;border-radius:50%;border:1px solid #2a3441;background:#111827;color:#fff}
+.btn{width:100%;max-width:390px;padding:14px 16px;margin:8px 0;border-radius:14px;text-decoration:none;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:3px}.btn small{font-weight:600;font-size:11px;opacity:.75}.kyle{background:#fff;color:#000}.level{background:#25D366;color:#fff}
+.total{text-align:center;margin-top:12px;padding:10px;background:#0f172a;border-radius:10px}.total strong{font-size:18px;color:#ffd700;display:block}.total em{display:block;font-style:normal;font-size:11px;color:#9ca3af;margin-top:4px}
+.secure{margin-top:12px;padding:12px;border:1px solid #1f3a2a;background:#0d1a14;border-radius:12px;font-size:11px;line-height:1.5;color:#b7d9c6}
+.secure b{color:#fff}
+</style>
+</head>
+<body>
+<div class="logo">KYLE GAME ZONE x LEVEL UP COTONOU</div>
+<h1>LEVEL UP COTONOU<br>XMAS FINAL</h1>
+<p class="sub">DEC 2026 • Cotonou Benin</p>
+<div class="card" id="mainCard">
+<h3>1. CHOISIS TON PASS</h3>
+<div class="ticket selected" id="tStd" onclick="selectTicket('STANDARD')"><div><div style="font-weight:800">PASS STANDARD</div><div style="font-size:11px;color:#9ca3af">10.000F • Early Bird 8.000F</div></div><div style="color:#ffd700;font-weight:900" id="priceStd">10.000F</div></div>
+<div class="ticket" id="tVip" onclick="selectTicket('VIP')"><div><div style="font-weight:800">PASS VIP <span style="background:#ffd700;color:#000;font-size:9px;padding:3px 6px;border-radius:20px">PREMIUM</span></div><div style="font-size:11px;color:#9ca3af">Front row + Premium</div></div><div style="color:#ffd700;font-weight:900">15.000F</div></div>
+<div class="ticket" id="tLady" onclick="selectTicket('LADY')"><div><div style="font-weight:800">PASS LADY <span style="background:#ff3b3b;color:#fff;font-size:9px;padding:3px 6px;border-radius:20px">INVITATION</span></div><div style="font-size:11px;color:#9ca3af">Sur invitation • 20 places max</div></div><div style="color:#ff8dc7;font-weight:800;font-size:12px;text-align:right" id="priceLady">PRESQUE<br>GRATUIT</div></div>
+<div class="early active" id="earlyBox"><input type="checkbox" id="early" onchange="toggleEarly()"><label for="early" id="earlyLabel"></label></div>
+<div class="qty"><span>Quantité</span><div style="display:flex;gap:12px;align-items:center"><button onclick="changeQty(-1)" aria-label="Moins">-</button><span id="q" style="font-weight:800">1</span><button onclick="changeQty(1)" aria-label="Plus">+</button></div></div>
+<div class="total"><span>Total estimé</span><strong id="totalPrice">10.000F</strong><em id="totalNote"></em></div>
+</div>
+<div class="card" id="reserveCard">
+<h3>2. RESERVE VIA WHATSAPP</h3>
+<a id="btnKyle" class="btn kyle" href="#" rel="noopener noreferrer">📱 KS GAME ET SERVICES<small>+229 01 62 81 06 85</small></a>
+<a id="btnLevel" class="btn level" href="#" rel="noopener noreferrer">📱 LEVEL UP COTONOU<small>+229 01 62 59 87 17</small></a>
+<div class="secure">🔒 <b>Paiement sécurisé :</b> le prix final et ta place sont confirmés par WhatsApp. Ne paie <b>qu'après confirmation</b> auprès des <b>deux numéros officiels</b> ci-dessus. Aucune autre personne ne te demandera de payer.</div>
+</div>
+<script>
+/* PLACES RESTANTES : modifier ces deux nombres quand des places sont vendues */
+const EARLY_LEFT_STD=10;   /* Early Bird : uniquement pass Standard */
+const LADY_LEFT=20;        /* Pass Lady : 20 maximum, sur invitation */
+
+const PRICE={STANDARD:10000,VIP:15000};const EARLY_STD=8000;
+let ticket='STANDARD';let qty=1;let early=false;
+const fmt=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+const ids={STANDARD:'tStd',VIP:'tVip',LADY:'tLady'};
+function maxQty(){return ticket==='LADY'?Math.max(1,Math.min(10,LADY_LEFT)):10;}
+function selectTicket(val){
+if(val==='LADY'&&LADY_LEFT<=0)return;
+ticket=val;document.querySelectorAll('.ticket').forEach(t=>t.classList.remove('selected'));document.getElementById(ids[val]).classList.add('selected');updateAll();}
+function changeQty(d){qty=Math.max(1,Math.min(maxQty(),qty+d));updateAll();}
+function toggleEarly(){early=document.getElementById('early').checked;updateAll();}
+function updateAll(){
+const ladyFull=LADY_LEFT<=0;
+document.getElementById('tLady').classList.toggle('full',ladyFull);
+document.getElementById('priceLady').innerHTML=ladyFull?'COMPLET':'PRESQUE<br>GRATUIT';
+qty=Math.max(1,Math.min(maxQty(),qty));document.getElementById('q').innerText=qty;
+
+/* Early Bird : Standard uniquement */
+const box=document.getElementById('earlyBox');const cb=document.getElementById('early');const label=document.getElementById('earlyLabel');
+const counter=`<div style="font-size:11px;margin-top:6px">🎟️ Early Bird restant : <b style="color:#ffd700">${Math.max(0,EARLY_LEFT_STD)}</b> Standard</div>`;
+let cls='active';let reason='';
+if(ticket!=='STANDARD'){cls='off';reason='Early Bird réservé au pass Standard';}
+else if(EARLY_LEFT_STD<=0){cls='sold';reason='EARLY BIRD EPUISE<br><span style="font-size:11px">Vente continue prix normal</span>';}
+else if(qty>EARLY_LEFT_STD){cls='sold';reason=`Plus que ${EARLY_LEFT_STD} place(s) Early Bird<br><span style="font-size:11px">Réduis la quantité pour en profiter</span>`;}
+if(cls==='active'){box.className='early active';cb.disabled=false;label.innerHTML=`<strong>🎁 EARLY BIRD</strong><br><span style="font-size:11px;color:#9ca3af">Pass Standard à 8.000F au lieu de 10.000F</span>${counter}`;}
+else{early=false;cb.checked=false;cb.disabled=true;box.className='early '+cls;label.innerHTML=`<strong>${reason}</strong>${counter}`;}
+
+/* Prix */
+let unit=0;
+if(ticket==='STANDARD')unit=early?EARLY_STD:PRICE.STANDARD;
+if(ticket==='VIP')unit=PRICE.VIP;
+const total=unit*qty;
+const isLady=ticket==='LADY';
+document.getElementById('totalPrice').innerText=isLady?'PRESQUE GRATUIT':fmt(total)+'F';
+document.getElementById('totalNote').innerText=isLady?`Sur invitation • montant confirmé sur WhatsApp • ${Math.max(0,LADY_LEFT)}/20 places restantes`:'Prix final confirmé sur WhatsApp';
+document.getElementById('priceStd').innerText=early?'8.000F':'10.000F';
+
+/* Message WhatsApp */
+const earlyTxt=early?'OUI Early Bird ('+fmt(unit)+'F)':'NON';
+const lines=isLady
+?['LEVEL UP XMAS - Demande Pass LADY (sur invitation) :','- Qty : '+qty,'- Montant : presque gratuit (a confirmer)']
+:['LEVEL UP XMAS - Reservation :','- Pass : '+ticket,'- Qty : '+qty,'- Early Bird : '+earlyTxt,'- Total : '+fmt(unit)+'F x '+qty+' = '+fmt(total)+'F'];
+const q='?text='+encodeURIComponent(lines.join('\n'));
+document.getElementById('btnKyle').href='https://wa.me/2290162810685'+q;
+document.getElementById('btnLevel').href='https://wa.me/2290162598717'+q;
+}
+updateAll();
+</script>
+</body>
+</html>
